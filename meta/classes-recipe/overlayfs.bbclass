@@ -69,12 +69,12 @@ python do_create_overlayfs_units() {
     with open(d.getVar("OVERLAYFS_ALL_OVERLAYS_TEMPLATE"), "r") as f:
         AllOverlaysTemplate = f.read()
 
-    def prepareUnits(data, lower):
+    def prepareUnits(data, lower, mount):
         from oe.overlayfs import helperUnitName
 
         args = {
             'DATA_MOUNT_POINT': data,
-            'DATA_MOUNT_UNIT': mountUnitName(data),
+            'DATA_MOUNT_UNIT': mount,
             'CREATE_DIRS_SERVICE': helperUnitName(lower),
             'LOWERDIR': lower,
         }
@@ -109,7 +109,10 @@ python do_create_overlayfs_units() {
         for lower in lowerList.split():
             bb.debug(1, "Prepare mount unit for %s with data mount point %s" %
                      (lower, d.getVarFlag('OVERLAYFS_MOUNT_POINT', mountPoint)))
-            prepareUnits(d.getVarFlag('OVERLAYFS_MOUNT_POINT', mountPoint), lower)
+            data = d.getVarFlag('OVERLAYFS_MOUNT_POINT', mountPoint)
+            data = data + f"/overlay-{lower[1:].replace('/', '-')}"
+            #bb.warn(f"({data}, {lower})")
+            prepareUnits(data=data, lower=lower, mount=overlayMountPoints)
             mountUnitList.append(mountUnitName(lower))
 
     # set up one unit, which depends on all mount units, so users can set
